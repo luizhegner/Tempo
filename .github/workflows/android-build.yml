@@ -1,0 +1,40 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [ "main", "master" ] # Altere para a sua branch principal se for diferente
+  pull_request:
+    branches: [ "main", "master" ]
+  workflow_dispatch: # Permite que você clique em um botão para rodar o build manualmente
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    # 1. Faz o checkout do código do repositório para o runner
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    # 2. Configura o ambiente Java (JDK 17 é o padrão para a maioria das ferramentas Android modernas)
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'zulu' # Distribuição recomendada para desenvolvimento Android
+        java-version: '17'
+
+    # 3. Dá permissão de execução para o script do Gradle (evita problemas de permissão negada)
+    - name: Grant Execute Permission for Gradlew
+      run: chmod +x ./gradlew
+
+    # 4. Compila o APK no modo Debug (ideal para testes rápidos sem precisar assinar com keystore)
+    - name: Build Debug APK
+      run: ./gradlew assembleDebug
+
+    # 5. Salva o APK gerado como um artefato para você fazer o download direto do GitHub
+    - name: Upload APK Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: tempo-scrobbler-debug-apk
+        path: app/build/outputs/apk/debug/app-debug.apk
+        
