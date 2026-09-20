@@ -1,77 +1,77 @@
-# Privacy Policy for Tempo
+# Privacy policy for Tempo
 
-**Last Updated:** December 31, 2025
+Last updated: September 16, 2026
 
-## 1. Introduction
+Tempo is a local-first music tracker for Android. Your listening history stays on your phone. Tempo runs no server of its own, creates no accounts, shows no ads, and sells no data. There is no advertising or attribution SDK in the app.
 
-Tempo ("we", "our", or "the App") is designed with a **"Local-First"** philosophy. We believe your music listening habits are personal data that belongs to you. Unlike most modern applications, Tempo does **not** have a central server, does **not** create user accounts, and does **not** track your usage for advertising or analytics purposes.
+Short version: two things leave your device. Search queries go to metadata services so Tempo can show album art and genres. Anonymous app-health statistics go to Aptabase so crashes get fixed. Nothing you listened to goes with either one. Turn off health reporting at any time in Settings → Your Data.
 
-All your listening history, statistics, and preferences are stored locally on your device in a secure database.
+## What stays on your device
 
-## 2. Data Collection & Permissions
+All listening history lives in an encrypted SQLite (Room) database in internal storage.
 
-To function as a music tracker, Tempo requires specific permissions on your Android device. Here is a transparent breakdown of what we access and why:
+Lose your phone without a backup and the history is gone. Tempo cannot recover it because Tempo never had it.
 
-| Permission | Usage |
-| :--- | :--- |
-| **Notification Access** (`BIND_NOTIFICATION_LISTENER_SERVICE`) | **Core Feature.** Used to detect what music is playing on your device (Spotify, YouTube Music, etc.) by reading the media notifications. We strictly filter for music apps and ignore all other notifications (like messages or emails). |
-| **Foreground Service** (`FOREGROUND_SERVICE`) | Ensures the app can faithfully track music in the background without being killed by the Android system. |
-| **Internet Access** (`INTERNET`) | Required **only** to fetch metadata (album art, genres, artist info) from public APIs. Your personal listening history is **never** uploaded. |
-| **Media Control** (`MEDIA_CONTENT_CONTROL`) | specific access to the active media session to get accurate playback status (Paused/Playing) and timeline positions. |
+Backups are yours to control:
 
-## 3. Data Storage
+- Export the full database to a file.
+- Restore from a backup file.
+- Write encrypted backups to your own Google Drive by connecting a Google account. Those files go to your Drive, not to Tempo.
+- Wipe everything in app settings.
 
-- **Local Database:** All data is stored in an encrypted SQLite (`Room`) database on your device's internal storage.
-- **No Cloud Backup:** Since we have no servers, we cannot "restore" your data if you lose your phone.
-- **User Control:**
-    - **Export:** You can export your entire database as a backup file.
-    - **Import:** You can restore your data from a backup file.
-    - **Clear Data:** You can wipe all data from the app settings at any time.
+## Permissions Tempo asks for
 
-## 4. External Services & Data Sharing
+| Permission | Why Tempo needs it |
+|---|---|
+| Notification access (`BIND_NOTIFICATION_LISTENER_SERVICE`) | Detects what is playing by reading media notifications from music apps. Tempo filters for music apps and ignores other notifications such as messages or mail. |
+| Foreground service (`FOREGROUND_SERVICE`) | Keeps tracking running in the background without the system killing it. |
+| Internet (`INTERNET`) | Fetches metadata from the services below and sends the anonymous health statistics described in the next section. Listening history is never uploaded. |
+| Media control (`MEDIA_CONTENT_CONTROL`) | Reads the active media session for accurate play, pause, and position state. |
 
-Tempo uses third-party APIs to enrich your experience with album art, genres, and artist details. We share the minimum amount of data necessary (typically just search queries) to get this information.
+## Metadata lookups
 
-### 4.1 Spotify
-- **Usage:** To fetch high-resolution album art, audio features (danceability, energy), and artist genres.
-- **Data Shared:** Search queries (Artist Name, Song Title).
-- **Authentication:** If you choose to link your Spotify account, the authentication token is stored locally and used only for these API calls.
+To show art, genres, and artist details, Tempo queries third-party services directly from your device. No proxy, no Tempo server in the middle. Each request sends the minimum needed to find a match, usually artist and title.
 
-### 4.2 iTunes (Apple Music)
-- **Usage:** As a fallback source for high-quality album artwork and artist images.
-- **Data Shared:** Search queries (Artist Name, Album Title) sent to the public iTunes Search API.
-- **Web Scraping:** The app may access public Apple Music artist pages to extract high-quality artist images that are not available via the API.
+- Spotify: album art, audio features, and artist genres. Search queries send artist name and song title. If you link a Spotify account, the token stays on your device and is used only for these calls.
+- iTunes Search API: fallback for album art and artist images. Search queries send artist and album title. Tempo may also read public Apple Music artist pages for images the API does not return.
+- MusicBrainz and Cover Art Archive: metadata and standard tags. Search queries send artist and title.
+- ReccoBeats: mood and energy analysis when Spotify data is missing. Search queries send artist and title. If a track is not in their database, Tempo may send the public 30-second preview URL supplied by Spotify for analysis. Tempo never uploads your local audio files.
+- Last.fm and Deezer: fallback for biographies, tags, and cover art. Search queries only.
 
-### 4.3 MusicBrainz & Cover Art Archive
-- **Usage:** To fetch accurate metadata and standardized tags.
-- **Data Shared:** Search queries (Artist Name, Song Title).
+## Anonymous app-health reporting
 
-### 4.4 ReccoBeats
-- **Usage:** To analyze the "mood" and "energy" of tracks when Spotify data is unavailable.
-- **Data Shared:**
-    - Search queries (Artist Name, Song Title).
-    - **Public Preview Clips:** In rare cases where a song is not in their database, the app may send a public 30-second preview URL (provided by Spotify) to ReccoBeats for audio analysis. **We never upload your personal local audio files.**
+Tempo sends anonymous statistics about the app itself: crashes, errors, and which features are used. This is the only data about you that leaves the device besides the metadata queries above.
 
-### 4.5 Last.fm & Deezer
-- **Usage:** Fallback sources for artist biographies, tags, and cover art.
-- **Data Shared:** Search queries.
+What is sent: crash signatures (obfuscated class name and line, never the message), failure counts by category, screens and features reached, whether onboarding finished, and whether background detection is alive. Counts go out as ranges, not exact numbers. The exact list is in the app under Settings → Your Data → Data and diagnostics, and in `docs/ANALYTICS.md`.
 
-## 5. Network Communication
+What is never sent: track, artist, album, or playlist names. Search queries. Notification content. File paths. Listening timestamps. Google, Spotify, or Last.fm account details. Any device identifier, including advertising ID and `ANDROID_ID`. Crash messages are left out on purpose, because a parse error can echo notification text.
 
-All network requests are made directly from your device to these third-party services. Tempo does not route traffic through any intermediate proxy or server owned by us.
+How you stay unidentified: Tempo sets no user ID. The only session value is random, held in memory, regenerated on each start, and rotated after an hour of inactivity. It is never written to disk. No cookies.
 
-## 6. Children's Privacy
+Where it goes: Aptabase, in the EU. Aptabase is open source and its SDKs send no identifiers. On receipt it derives a temporary hash from IP and user agent against a salt that rotates every 24 hours. Old salts are purged on a schedule, so events cannot be linked across days. One caveat stated plainly: that IP also yields a coarse country and region, stored with the event. It is not precise and is not linked to anything else, but it is location data and you should know it is kept.
 
-Tempo is a general utility app and is not directed at children under the age of 13. We do not knowingly collect personal information from children.
+When it is sent: over any connection, including mobile data. Each event is a few hundred bytes, about 16 KB on a busy day, so waiting for Wi-Fi would silence reporting for people on mobile data only. Nothing is collected until the in-app notice has been shown, and the notice stays up until you acknowledge it or turn reporting off.
 
-## 7. Changes to This Policy
+To turn it off: open Settings → Your Data → Anonymous app-health stats. Reporting stops at once and anything buffered but unsent is deleted. This works from any screen.
 
-We may update this Privacy Policy to reflect changes in our app's functionality. Since we do not collect user emails, we cannot notify you directly. Please check this file or the "About" section in the app for updates.
+Builds compiled from source send nothing. The reporting key is not committed to the repository, so a self-built copy has reporting inert.
 
-## 8. Contact
+## Diagnostics report
 
-If you have questions about privacy or technical details:
+Apart from automatic reporting, Tempo can build a diagnostics report when you ask for it in Settings → Your Data → Data and diagnostics. It covers build and database versions, library counts, metadata status, detection health, and background work state, and it appears on screen so you can read it first.
 
-**Developer:** Avinash
-**Email:** hi@avinas.me
-**GitHub:** [https://github.com/avinaxhroy/Tempo](https://github.com/avinaxhroy/Tempo)
+Nothing uploads to make it. It leaves your phone only if you share it, for example attached to a bug report. Because you start it and review it, it carries more detail than the automatic events. It still holds no track, artist, or album names, no file paths, and no account or device identifiers.
+
+## Children
+
+Tempo is a general music utility, not aimed at children under 13. Tempo does not knowingly collect personal information from children.
+
+## Changes to this policy
+
+Tempo may update this policy as features change. Tempo collects no email addresses, so there is no mailing list to notify. Check this file or the About section in the app for updates.
+
+## Contact
+
+Developer: Avinash
+Email: hi@avinash.im
+GitHub: https://github.com/avinaxhroy/Tempo

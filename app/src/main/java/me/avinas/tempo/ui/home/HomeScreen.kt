@@ -54,6 +54,7 @@ import me.avinas.tempo.utils.ReviewUtils
 @Composable
 fun HomeScreen(
     viewModel: HomeViewModel = hiltViewModel(),
+    analyticsDisclosureViewModel: AnalyticsDisclosureViewModel = hiltViewModel(),
     onNavigateToStats: () -> Unit,
     onNavigateToHistory: () -> Unit,
     onNavigateToSettings: () -> Unit,
@@ -65,6 +66,7 @@ fun HomeScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val flags by viewModel.flagsState.collectAsState()
+    val analyticsDisclosure by analyticsDisclosureViewModel.uiState.collectAsState()
     val context = androidx.compose.ui.platform.LocalContext.current
     var isLaunchingReview by remember { mutableStateOf(false) }
     var showTodaysOverview by remember { mutableStateOf(false) }
@@ -203,6 +205,8 @@ fun HomeScreen(
                                         viewModel.onSpotlightViewed()
                                         if (directStoryTimeRange != null) {
                                             onNavigateToSpotlight(directStoryTimeRange, true)
+                                        } else {
+                                            onNavigateToSpotlight(null, true)
                                         }
                                     },
                                     albumArtUrl = uiState.spotlightTopTrack?.albumArtUrl,
@@ -424,6 +428,14 @@ fun HomeScreen(
                 newLevel = levelUpLevel,
                 title = levelUpTitle,
                 onDismiss = { showLevelUp = false }
+            )
+        }
+
+        // One-time analytics disclosure. Overlapping dialog so it can't be
+        // scrolled past or mistaken for feed content.
+        if (analyticsDisclosure.shouldShow) {
+            AnalyticsDisclosureDialog(
+                viewModel = analyticsDisclosureViewModel,
             )
         }
     }
